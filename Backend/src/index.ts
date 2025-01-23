@@ -1,2 +1,4 @@
-console.log('Hello World');
-console.log('Hello Eduardo');
+import dotenv from "dotenv";
+import Server from "./server";
+dotenv.config();
+const server  = new Server();
