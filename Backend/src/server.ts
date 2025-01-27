@@ -2,7 +2,9 @@
 import express, {Application} from 'express';
 import sequelize from './database/connect';
 import UserRouter from './routes/users';
-import { User } from './models/users';
+import ProductRouter from './routes/product';
+//import { User } from './models/users';
+import { Product } from './models/product';
 class Server{
     private app: Application;
     private port: string;
@@ -24,6 +26,7 @@ class Server{
 
     router(){
         this.app.use(UserRouter);
+        this.app.use(ProductRouter);
     }
 
     midlewares(){
@@ -32,9 +35,9 @@ class Server{
 
     async DBconnection(){
         try {
-            //await sequelize.authenticate();
-            await User.sync({ force: true });
-            console.log('Dthe table for user model was just (re)created!');
+            await sequelize.authenticate();
+            //await User.sync({ force: true });
+            //await Product.sync({ force: true });
             console.log('Connection has been established successfully.');
         } catch (error) {
             console.error('Unable to connect to the database:', error);      

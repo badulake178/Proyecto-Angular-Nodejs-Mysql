@@ -13,8 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const connect_1 = __importDefault(require("./database/connect"));
 const users_1 = __importDefault(require("./routes/users"));
-const users_2 = require("./models/users");
+const product_1 = __importDefault(require("./routes/product"));
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
@@ -31,6 +32,7 @@ class Server {
     }
     router() {
         this.app.use(users_1.default);
+        this.app.use(product_1.default);
     }
     midlewares() {
         this.app.use(express_1.default.json());
@@ -38,9 +40,9 @@ class Server {
     DBconnection() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                //await sequelize.authenticate();
-                yield users_2.User.sync({ force: true });
-                console.log('Dthe table for user model was just (re)created!');
+                yield connect_1.default.authenticate();
+                //await User.sync({ force: true });
+                //await Product.sync({ force: true });
                 console.log('Connection has been established successfully.');
             }
             catch (error) {
