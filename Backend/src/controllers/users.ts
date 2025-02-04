@@ -1,10 +1,15 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { User } from '../models/users';
+import { Op } from 'sequelize';
 
 export const registerUser = async (req: Request, res: Response) => {
     //console.log(req.body);
     const { name, lastname, password, email, credential} = req.body;
+
+    const userFind = User.findOne({where: {[Op.or]: {email: email, credential: credential}}})
+
+
     const passwordHash = await bcrypt.hash(password, 10);
     User.create({
         name: name,
