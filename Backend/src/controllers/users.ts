@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { User } from '../models/users';
 import { Op } from 'sequelize';
+import jwt from 'jsonwebtoken';
 
 export const registerUser = async (req: Request, res: Response) => {
     //console.log(req.body);
@@ -9,7 +10,11 @@ export const registerUser = async (req: Request, res: Response) => {
 
     const userFind = User.findOne({where: {[Op.or]: {email: email, credential: credential}}})
 
-
+    if(!userFind){
+        return res.status(400).json({
+            msg: `Usuario ya existe en el email => ${email} o credential => ${credential}`
+        })
+    }
     const passwordHash = await bcrypt.hash(password, 10);
     User.create({
         name: name,
@@ -25,15 +30,36 @@ export const registerUser = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
-    const { email, password } = req.body;
-    const user = await User.findOne({where: {email: email}});
+
+    const {  email, password} = req.body;
+
+    console.log(req.body.password);
+    
+
+    const user:any = await User.findOne({where: {email: email}});
+
+    console.log(user.password);
+    
 
     if(!user){
-        return res.json({
-            message: 'User not found'
+        return res.status(400).json({
+            msg: `Usuario no existe con el email=> ${email}`
         });
     }
 
-    return res.json({message: 'User found'});
+
     
+
+    const passwordValid = await bcrypt.compare(password, user.password  );
+
+    if(!passwordValid){
+        return res.status(400).json({
+            msg: `Correo o Password incorrecto.`
+        })
+    }
+    const token = jwt.sign({email: email}, process.env.SECRET_KEY || 'Jdz237797TH1dp7zjFzm')
+
+    res.json({
+        token: token
+    })
 }
