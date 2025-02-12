@@ -4,62 +4,73 @@ import { User } from '../models/users';
 import { Op } from 'sequelize';
 import jwt from 'jsonwebtoken';
 
-export const registerUser = async (req: Request, res: Response) => {
-    //console.log(req.body);
-    const { name, lastname, password, email, credential} = req.body;
+export const registerUser = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { name, lastname, password, email, credential } = req.body;
 
-    const userFind = User.findOne({where: {[Op.or]: {email: email, credential: credential}}})
+        // Verificar si el usuario ya existe
+        const userFind = await User.findOne({
+            where: { [Op.or]: [{ email }, { credential }] }
+        });
 
-    if(!userFind){
-        return res.status(400).json({
-            msg: `Usuario ya existe en el email => ${email} o credential => ${credential}`
-        })
+        if (userFind) {
+            res.status(400).json({
+                msg: `Usuario ya existe con el email => ${email} o credential => ${credential}`
+            });
+        }
+
+        // Hashear la contraseña
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        // Crear usuario
+        await User.create({
+            name,
+            lastname,
+            password: passwordHash,
+            email,
+            credential,
+            status: 1,
+        });
+
+        res.status(201).json({
+            message: 'User created successfully'
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Error en el servidor' });
     }
-    const passwordHash = await bcrypt.hash(password, 10);
-    User.create({
-        name: name,
-        lastname: lastname,
-        password: passwordHash,
-        email: email,
-        credential: credential,
-        status: 1,
-    })
-    res.json({
-        message: 'User created successfully'
-    });
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { email, password } = req.body;
 
-    const {  email, password} = req.body;
+        // Buscar el usuario por email
+        const user: any = await User.findOne({ where: { email } });
 
-    console.log(req.body.password);
-    
+        if (!user) {
+            res.status(400).json({
+                msg: `Usuario no existe con el email => ${email}`
+            });
+        }
 
-    const user:any = await User.findOne({where: {email: email}});
+        // Comparar la contraseña
+        const passwordValid = await bcrypt.compare(password, user.password);
 
-    console.log(user.password);
-    
+        if (!passwordValid) {
+            res.status(400).json({
+                msg: `Correo o Password incorrecto.`
+            });
+        }
 
-    if(!user){
-        return res.status(400).json({
-            msg: `Usuario no existe con el email=> ${email}`
-        });
+        // Generar token
+        const token = jwt.sign(
+            { email },
+            process.env.SECRET_KEY || 'Jdz237797TH1dp7zjFzm',
+            { expiresIn: '1h' } // ✅ Aquí está corregido
+        );
+
+         res.json({ token });
+    } catch (error) {
+         res.status(500).json({ error: 'Error en el servidor' });
     }
-
-
-    
-
-    const passwordValid = await bcrypt.compare(password, user.password  );
-
-    if(!passwordValid){
-        return res.status(400).json({
-            msg: `Correo o Password incorrecto.`
-        })
-    }
-    const token = jwt.sign({email: email}, process.env.SECRET_KEY || 'Jdz237797TH1dp7zjFzm')
-
-    res.json({
-        token: token
-    })
-}
+};

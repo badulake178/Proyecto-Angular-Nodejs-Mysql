@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.registerProduct = void 0;
+exports.getProducts = exports.registerProduct = void 0;
 const product_1 = require("../models/product");
 const registerProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //console.log(req.body);
@@ -24,3 +24,8 @@ const registerProduct = (req, res) => __awaiter(void 0, void 0, void 0, function
     });
 });
 exports.registerProduct = registerProduct;
+const getProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const listProducts = yield product_1.Product.findAll();
+    res.json({ listProducts });
+});
+exports.getProducts = getProducts;
